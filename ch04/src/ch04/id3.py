@@ -2,15 +2,36 @@
 
 # Iterative Dichotomizer 3
 import pandas as pd
-import info_metrics # type: ignore
+if __package__:
+    from . import info_metrics
+else:
+    import info_metrics
 
-def id3(df: pd.DataFrame, info_metric, domains=None, parent_majority=None):
+def id3(
+    df: pd.DataFrame,
+    info_metric,
+    domains=None,
+    parent_majority=None,
+    continuous_features=None,
+):
     """
     Iteratively partitions the dataset based on which feature is most informative
     and grows branches for each of the descriptive feature levels.
+
+    Explicitly list continuous_features to use binary threshold tests. The
+    target must be the last column. Categorical nodes use {feature: branches};
+    continuous nodes use {(feature, threshold): {"<": subtree, ">=": subtree}}.
     """
+    continuous_features = set(continuous_features or ())
     if domains is None:
-        domains = {col: df[col].unique().tolist() for col in df.columns[:-1]}
+        unknown = continuous_features - set(df.columns[:-1])
+        if unknown:
+            raise ValueError(f"Unknown continuous features: {sorted(unknown)}")
+        domains = {
+            col: df[col].unique().tolist()
+            for col in df.columns[:-1]
+            if col not in continuous_features
+        }
 
     if df.empty:
         # a decision tree consisting of a leaf node with the label of the
@@ -35,8 +56,40 @@ def id3(df: pd.DataFrame, info_metric, domains=None, parent_majority=None):
 
     else:
         # 5. find the most informative descriptive feature
-        data = info_metric(df)
+        categorical_features = [
+            feature for feature in descriptive_features
+            if feature not in continuous_features
+        ]
+        data = info_metric(df[categorical_features + [target_feature]])
+        thresholds = {}
+        for feature in descriptive_features:
+            if feature not in continuous_features:
+                continue
+            scores = info_metrics.continuous_information_gains(df, feature, info_metric)
+            if scores:
+                threshold = max(scores, key=scores.get)
+                thresholds[feature] = threshold
+                data[feature] = scores[threshold]
+
+        # Continuous columns with no candidate boundary cannot split this node.
+        if not data:
+            return current_majority
         best_feature = max(data, key=data.get)
+
+        if best_feature in continuous_features:
+            threshold = thresholds[best_feature]
+            tree = {(best_feature, threshold): {}}
+            above = df[best_feature] >= threshold
+            for branch, mask in (("<", ~above), (">=", above)):
+                # Keep continuous features: a later node can use another threshold.
+                tree[(best_feature, threshold)][branch] = id3(
+                    df=df[mask],
+                    info_metric=info_metric,
+                    domains=domains,
+                    parent_majority=current_majority,
+                    continuous_features=continuous_features,
+                )
+            return tree
 
         # 6. make a new node and label it with the best descriptive feature
         tree = {best_feature: {}}
@@ -53,10 +106,24 @@ def id3(df: pd.DataFrame, info_metric, domains=None, parent_majority=None):
                 info_metric=info_metric,
                 domains=domains,
                 parent_majority=current_majority,
+                continuous_features=continuous_features,
             )
             tree[best_feature][val] = subtree
 
         return tree
+
+
+def predict(tree, row):
+    """Follow categorical or threshold branches for one row (Series or dict)."""
+    while isinstance(tree, dict):
+        split, branches = next(iter(tree.items()))
+        if isinstance(split, tuple):
+            feature, threshold = split
+            branch = ">=" if row[feature] >= threshold else "<"
+        else:
+            branch = row[split]
+        tree = branches[branch]
+    return tree
 
 if __name__ == '__main__':
     # Read the dataset

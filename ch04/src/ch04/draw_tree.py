@@ -3,8 +3,11 @@
 import pandas as pd
 import uuid
 import graphviz
-import id3 # type: ignore
-import info_metrics # type: ignore
+if __package__:
+    from . import id3, info_metrics
+else:
+    import id3
+    import info_metrics
 
 def print_ascii_tree(tree, indent=""):
     """Recursively prints a nested dict tree with branch symbols."""
@@ -26,7 +29,12 @@ def print_ascii_tree(tree, indent=""):
             connector = "└── " if is_last else "├── "
             extension = "    " if is_last else "│   "
 
-            print(f"{indent}{connector}{feature} == {val}", end="")
+            if isinstance(feature, tuple):
+                name, threshold = feature
+                test = f"{name} {val} {threshold:g}"
+            else:
+                test = f"{feature} == {val}"
+            print(f"{indent}{connector}{test}", end="")
 
             if isinstance(subtree, dict):
                 print()
@@ -66,13 +74,18 @@ def draw_tree(tree, file_name="decision_tree"):
 
         # Decision node (colored blue)
         feature_name = list(sub_tree.keys())[0]
-        dot.node(node_id, feature_name, fillcolor="#bbdefb")
+        label = feature_name[0] if isinstance(feature_name, tuple) else feature_name
+        dot.node(node_id, label, fillcolor="#bbdefb")
 
         if parent_id:
             dot.edge(parent_id, node_id, label=str(edge_label))
 
         for branch_val, child in sub_tree[feature_name].items():
-            add_nodes_edges(child, parent_id=node_id, edge_label=branch_val)
+            edge_label = (
+                f"{branch_val} {feature_name[1]:g}"
+                if isinstance(feature_name, tuple) else branch_val
+            )
+            add_nodes_edges(child, parent_id=node_id, edge_label=edge_label)
 
     add_nodes_edges(tree)
     # Saves as 'decision_tree.png' and opens it

@@ -1,8 +1,13 @@
 # file: info_metrics.py
 
+import math
 import pandas as pd
-import entropy # type: ignore
-import gini # type: ignore
+
+if __package__:
+    from . import entropy, gini
+else:
+    import entropy
+    import gini
 
 def information_gains(df):
     # 1. Calcualte the entropy of the original dataset wrt the target feature
@@ -37,6 +42,50 @@ def information_gains(df):
             initial_entropy - feature_remaining_entropies[descriptive_feature]
 
     return info_gains
+
+
+def candidate_thresholds(df, feature):
+    """Midpoints at target transitions, grouping equal feature values first.
+
+    A mixed-label group can have a useful split on either side, so keep those
+    boundaries too. Equal feature values must never be split across branches.
+    The target is the last column, just as in information_gains().
+    """
+    values = df[feature]
+    if not pd.api.types.is_numeric_dtype(values):
+        raise ValueError(f"Continuous feature {feature!r} must be numeric")
+    if values.isna().any() or any(not math.isfinite(v) for v in values):
+        raise ValueError(f"Continuous feature {feature!r} must contain finite values")
+
+    target = df.columns[-1]
+    groups = [
+        (value, partition[target].unique().tolist())
+        for value, partition in df.groupby(feature, sort=True, observed=True)
+    ]
+    thresholds = []
+    for (lower, lower_labels), (upper, upper_labels) in zip(groups, groups[1:]):
+        if len(lower_labels) == len(upper_labels) == 1 and lower_labels == upper_labels:
+            continue
+        threshold = lower / 2 + upper / 2
+        # Adjacent floating-point values may have no representable midpoint.
+        if not lower < threshold <= upper:
+            threshold = upper
+        thresholds.append(threshold)
+    return thresholds
+
+
+def continuous_information_gains(df, feature, info_metric=information_gains):
+    """Return {threshold: score} for a continuous feature at the current node.
+
+    Replace the feature with a Boolean test to reuse the existing categorical
+    scoring functions (entropy, Gini, or gain ratio).
+    """
+    scores = {}
+    for threshold in candidate_thresholds(df, feature):
+        split_data = df.loc[:, [feature, df.columns[-1]]].copy()
+        split_data[feature] = df[feature] >= threshold
+        scores[threshold] = info_metric(split_data)[feature]
+    return scores
 
 
 def gini_information_gains(df):

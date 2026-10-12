@@ -1,12 +1,18 @@
 import pandas as pd
-import entropy # type: ignore
+from ch04.id3 import id3, predict
+from ch04.info_metrics import information_gains, continuous_information_gains
+from ch04.draw_tree import print_ascii_tree
 
-df = pd.read_csv("~/Laboratory/datasets/foml_datasets/tab4_2.csv")
+def sec4_4_2():
+    df = pd.read_csv("~/Laboratory/datasets/foml_datasets/tab4_8.csv")
+    data = df.drop(columns="ID")
 
-target = df.iloc[:, -1]  # last column
-probabilities = target.value_counts(normalize=True)
-ps = probabilities.tolist()
+    scores = continuous_information_gains(data, "ELEVATION")
+    tree = id3(data, information_gains, continuous_features={"ELEVATION"})
+    print_ascii_tree(tree)
 
-entrop = entropy.entropy(ps)
+    label = predict(tree, {"STREAM": True, "SLOPE": "steep", "ELEVATION": 4500})
+    print(label)  # conifer
 
-print(entrop)
+if __name__ == '__main__':
+    sec4_4_2()
