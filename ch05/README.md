@@ -101,6 +101,21 @@ def majority(query, k_nn):
 - $k$NN for regression
 - Data quality issues
 
+## 5.1 Big Idea
+## 5.2 Fundamentals
+182/237
+### 5.2.1 Feature Space
+### 5.2.2 Measuring Similarity Using Distance Metrics
+## 5.3 Standard Approach: The Nearest Neighbor Algorithm
+## 5.4 Extensions and Variations
+### 5.4.1 Handling Noisy Data
+### 5.4.2 Efficient Memory Search
+### 5.4.3 Data Normalization
+### 5.4.4 Predicting Continuous Targets
+### 5.4.5 Other Measures of Similarity
+### 5.4.6 Feature Selection
+## 5.5 Summary
+
 # Personal Summary Questions
 ## 1. What is the main idea behind how these algorithms work?
 
