@@ -15,8 +15,8 @@ def id3(
     continuous_features=None,
 ):
     """
-    Iteratively partitions the dataset based on which feature is most informative
-    and grows branches for each of the descriptive feature levels.
+    Iteratively partitions the dataset based on which feature is most
+    informative and grows branches for each of the descriptive feature levels.
 
     Explicitly list continuous_features to use binary threshold tests. The
     target must be the last column. Categorical nodes use {feature: branches};
