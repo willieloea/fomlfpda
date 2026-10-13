@@ -5,7 +5,7 @@ import pandas as pd
 if __package__:
     from . import info_metrics
 else:
-    import info_metrics
+    import info_metrics # type: ignore
 
 def id3(
     df: pd.DataFrame,

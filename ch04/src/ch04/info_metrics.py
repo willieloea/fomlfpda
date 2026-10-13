@@ -6,8 +6,8 @@ import pandas as pd
 if __package__:
     from . import entropy, gini
 else:
-    import entropy
-    import gini
+    import entropy # type: ignore
+    import gini # type: ignore
 
 def information_gains(df):
     # 1. Calcualte the entropy of the original dataset wrt the target feature

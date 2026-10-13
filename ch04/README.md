@@ -1,12 +1,13 @@
 # Chapter 4: Information-Based Learning
 
-## Decision trees with continuous features (Section 4.4.2)
+## 4.4 Extensions and variations
+### 4.4.2 Handling Continuous Descriptive Features
 
 A categorical split makes a branch for each level. A continuous split instead
 tests a threshold, making two branches: `feature < threshold` and
 `feature >= threshold`.
 
-At **each node**:
+At each node:
 
 1. Sort the continuous feature's values.
 2. Find adjacent distinct values whose target labels differ and use their
@@ -21,62 +22,63 @@ At **each node**:
 
 4. Compare the continuous feature's best gain with the categorical features'
    gains, then split on the best feature/test.
-5. Recurse. Remove a selected categorical feature, but keep a selected continuous
-   feature so descendants can split it again at another threshold.
+5. Recurse. Remove a selected categorical feature, but keep a selected
+   continuous feature so descendants can split it again at another threshold.
 
 Features are explicitly declared continuous: numeric category codes can still
-be categorical. The target column must be last, and identifiers should be dropped.
+be categorical. The target column must be last, and identifiers should be
+dropped.
 
-### Run the textbook example
+### 4.4.3 Predicting Continuous Targets
 
-From `ch04/`:
+### 4.4.4 Tree Pruning
+Decision trees overfit because they recrsively split the training data until
+leaf nodes are homogenous, which often results in noisy instances receiving
+their own leaf nodes. The likelihood of overfitting increases as a tree gets
+deeper because the resulting predictions are based on smaller and smaller
+subsets as the dataset is partitioned after each test in the path.
 
-```bash
-uv run python -m ch04.continuous_example
-```
+There are two approaches to prune decision trees: 1) pre-pruning/early stopping,
+and 2) post-pruning
 
-This reads `~/Laboratory/datasets/foml_datasets/tab4_8.csv`, shows the threshold
-scores and tree, and predicts the seven training rows.
+__Early stopping__
 
-The candidate ELEVATION thresholds reproduce Table 4.10:
+- Stopping conditions that can be used:
+   - stop creating subtrees when the number of instances in a partition falls
+     below a threshold
+   - when the information gain measured at a node is not deemed to be sufficient
+     to make partitioning the data worthwhile
+   - when the depth of the tree goes beyond a predefined limit
+   - use statistical significance tests to determine the importance of subtrees,
+     for example, chi-squared pruning.
+- Advantages:
+   - is computationally feasible
+- Disadvantages:
+   - may lead to useful subtrees never being created (underfitting)
 
-| Threshold (feet) | Information gain (bits) |
-| ---: | ---: |
-| 750 | 0.3060 |
-| 1350 | 0.1839 |
-| 2250 | 0.5917 |
-| 4175 | 0.8631 |
 
-Since STREAM scores `0.3060` and SLOPE scores `0.5774`, the root uses
-**ELEVATION >= 4175**. Its upper branch is a pure `conifer` leaf. The lower
-branch is split recursively; ELEVATION remains available there.
+__Post-pruning__
 
-### Use the implementation
+- A tree is grown until it perfectly learns the training set, then subtrees that
+  likely capture noise of the training set are pruned.
+- Pruning conditions that can be used:
+   - Have a validation set and if the error rate (number of incorrect
+     predictions) for the validation set is the same with our without the
+     subtree, then it should be pruned.
+   - If the number of instances in a node is below a threshold, remove it.
 
-```python
-import pandas as pd
-from ch04.id3 import id3, predict
-from ch04.info_metrics import information_gains, continuous_information_gains
-from ch04.draw_tree import print_ascii_tree
+# Personal Summary Questions
+## 1. What is the main idea behind how these algorithms work?
 
-df = pd.read_csv("~/Laboratory/datasets/foml_datasets/tab4_8.csv")
-data = df.drop(columns="ID")
+## 2. Describe the standard algorithm for this prediction approach.
 
-scores = continuous_information_gains(data, "ELEVATION")
-tree = id3(data, information_gains, continuous_features={"ELEVATION"})
-print_ascii_tree(tree)
+## 3. What are important variations of this algorithm and what do those do?
 
-label = predict(tree, {"STREAM": True, "SLOPE": "steep", "ELEVATION": 4500})
-print(label)  # conifer
-```
+## 3. How does the standard algorithm take the following data quality issues, and can they be addressed?
+### 3.a. Imbalanced classes
+### 3.b. Missing Values
+### 3.c. Outliers
+### 3.d. Noise
+### 3.e. Continuous/Categorical Descriptive features
+### 3.f. Continuous/Categorical Target features
 
-Continuous nodes store the feature and numeric threshold as a tuple key:
-
-```python
-{("ELEVATION", 4175.0): {"<": lower_subtree, ">=": "conifer"}}
-```
-
-Categorical nodes retain the existing `{feature: {value: subtree}}` structure.
-Both ASCII and Graphviz displays support these nodes. Existing categorical-only
-calls to `id3(data, information_gains)` still work. The threshold scorer also
-accepts `gini_information_gains` or `gain_ratios` as its `info_metric` argument.
