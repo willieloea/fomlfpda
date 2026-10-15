@@ -127,6 +127,7 @@ def predict(tree, row):
 
 if __name__ == '__main__':
     # Read the dataset
-    df = pd.read_csv("~/Laboratory/datasets/foml_datasets/tab4_3.csv")
+    df = pd.read_csv("~/Laboratory/datasets/foml_datasets/tab4_13.csv")
     tree = id3(df.iloc[:, 1:], info_metrics.information_gains) # dropping the ID column
+    print("Original tree:", tree)
     # {feature_name: {value_1: subtree_or_leaf, value_2: subtree_or_leaf}}.
