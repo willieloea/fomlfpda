@@ -67,9 +67,9 @@ $$
 
 Where:
 
-- $P(t=i)$ ≈ Probability that a randomly selected element is of type $i$.
-- $l$ ≈ Number of different types.
-- $s$ ≈ Arbitrary logarithmic base.
+- $P(t=i) \approx$ Probability that a randomly selected element is of type $i$.
+- $l \approx$ Number of different types.
+- $s \approx$ Arbitrary logarithmic base.
 
 For a set containing only one target class:
 
@@ -129,7 +129,7 @@ tree.
 
 ## 4.3 Standard Approach: The ID3 Algorithm
 
-ID3 ≈ Iterative Dichotomiser 3.
+ID3 = Dichotomiser 3.
 
 It is a recursive algorithm that starts by creating a root node and works
 towards leaf nodes.
@@ -161,9 +161,9 @@ $$
 
 Where:
 
-- $t$ ≈ Target feature of the query instance.
-- $D$ ≈ Dataset.
-- $\operatorname{levels}(t)$ ≈ Levels or domain of the target feature.
+- $t \approx$ Target feature of the query instance.
+- $D \approx$ Dataset.
+- $\operatorname{levels}(t) \approx$ Levels or domain of the target feature.
 
 $\operatorname{Gini}(t,D)$ calculates how often target levels of instances in a
 dataset would be misclassified if predictions were made by randomly sampling
@@ -248,7 +248,7 @@ At each node:
 1. Sort instances by the value of the descriptive feature.
 2. For each point where the target feature changes, consider a possible split.
 3. Let \\(x\\) be the average of the two adjacent descriptive feature values.
-4. Split the dataset according to whether an instance's descriptive feature value is \\(\leq x\\).
+4. Split the dataset according to whether an instance's descriptive feature value is $\leq x$.
 5. Calculate the entropy with respect to the target feature based on that split.
 6. The split that results in the most information gained is the best value to split on.
 
@@ -296,6 +296,51 @@ __Post-pruning__
    - If the number of instances in a node is below a threshold, remove it.
 
 ### 4.4.5 Model Ensembles
+#### 4.4.5.1 Bagging
+Bootstrap sampling is when $n$ instances are randomly selected with replacement
+from a dataset that has $n$ instances.
+
+Bagging is when multiple models are trained using different subsets of the
+training dataset, e.g. bootstrap sampling, and the mode or median of predictions
+is used as the ensemble's prediction.
+
+Sub-bagging is when proper subsets of the training set is used to train models
+in a bagging ensemble.
+
+#### 4.4.5.2 Boosting
+Boosting iteratively trains models where each subsequent model is biased to
+correctly predict instances which previous models predicted incorrectly.
+
+The dataset used to train the models is weighted, where the weight associated
+with instance $i$ is $\mathbf{w}_i \geq 0$. These weights determine the
+distribution over which the dataset is sampled. Initially, all weights are set
+to $\frac{1}{n}$.
+
+Models are iteratively added to the ensemble until some number of models have
+been added. During each iteration, the following is done:
+
+1. Induce a model using the weighted training dataset and calculate the total
+   error $\epsilon$ as the sum of weights of incorrectly predicted instances.
+   The training set is used as this 'validation set'.
+2. Increase the weights of the incorrectly predicted instances:
+   $$
+   \mathbf{w}_i \leftarrow
+   \mathbf{w}_i \times \left( \frac{1}{2 \times \epsilon} \right)
+   $$
+   and decrease the weights of the correctly predicted instances:
+   $$
+   \mathbf{w}_i \leftarrow
+   \mathbf{w}_i \times \left( \frac{1}{2 \times (1-\epsilon)} \right)
+   $$
+3. Calculate a confidence factor, $\alpha$, for the model such that $\alpha$
+  increases as $\epsilon$, e.g.:
+   $$
+   \alpha = \frac{1}{2} \times
+   \log_{e} \left( \frac{1 - \epsilon}{\epsilon} \right)
+   $$
+
+
+#### 4.4.5.3 Gradient Boosting
 
 # Personal Summary Questions
 ## 1. What is the main idea behind how these algorithms work?
