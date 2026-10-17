@@ -159,5 +159,19 @@ Approaches for handling outliers:
 ### 3.6.1 Normalization
 ### 3.6.2 Binning
 ### 3.6.3 Sampling
+The sampling approach should not introduce bias - the sample used to train the
+model should accurately reflect the domain that is being modeled.
+
+Sampling approaches:
+- Top sampling: Take the top s% of instances
+- Random sampling: Select s% instances randomly
+- Stratified sampling: Ensure that the sample maintains the relative frequency
+  of different strata.
+- Under/Over-sampling: Under/Over sample different strata to ensure (more) equal
+  frequencies of different strata.
+
+Sampling with replacement means you do not remove an instances from your dataset
+after it has been sampled, so that it may be sampled again.
+
 ## 3.7 Summary
 
