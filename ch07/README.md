@@ -41,9 +41,69 @@ possible.
 ### 7.3.4 A Worked Example
 ## 7.4 Extensions and Variations
 ### 7.4.1 Interpreting Multivariable Linear Regression Models
+To determine the importance of a feature: use a statistical significance test.
+
+We want to know if there is enough evidence to accept or reject a null
+hypothesis
+
+Steps:
+1. State a null hypothesis
+2. Compute a test statistic
+3. Calculate the probability that a value equal to or greater than the test
+   statistic is due to chance - the 'p-value'
+4. Compare the p-value to a significance threshold. If the p-value is <= the
+   threshold, the null hypothesis should be rejected.
+
+
+1. "This feature does not have a significant impact on a model's predictions"
+2. Compute the t-statistic
+3. Lookup the p-value in a t-statistic table
+4. Reject or accept the null hypothesis.
+
 ### 7.4.2 Setting the Learning Rate Using Weight Decay
+Decay with
+$$
+\alpha_\tau = \alpha_0 \frac{c}{c+\tau}
+$$
+where typically:
+
+- $\alpha_0$ = 1.0
+- $c$ = 100
+- $\tau$ = current iteration of gradient descent algorithm
+
 ### 7.4.3 Handling Categorical Descriptive Features
+You can do one-hot encoding: each level of the categorical feature is
+represented by a binary feature (1 = level was present, 0 = not).
+
 ### 7.4.4 Handling Categorical Target Features: Logistic Regression
+#### 7.4.4.1 Predicting categorical targets using linear regression
+If you have a linear regression model that produces an error surface, you can
+have a threshold function like this:
+$$
+M_\mathbf{w}(\mathbf{d}) = 1 \text{if} \mathbf{w}\cdot\mathbf{d} \geq 0
+M_\mathbf{w}(\mathbf{d}) = 0 \text{otherwise}
+$$
+
+But this means we won't be able to use gradient descent for two reasons:
+1. The threshold function is discontinuous, so it is not differentiable
+2. The model's predictions are not nuanced, they are very stark (0 or 1)
+
+we will solve both with the logistic function
+
+#### 7.4.4.2 Logistic regression
+
+$$
+M_\mathbf{w}(\mathbf{d}) = \frac{1}{1 + e^{-\mathbf{w}\cdot\mathbf{d}}}
+$$
+
+
+#### 7.4.4.3 A worked example of multivariable logistic regression
+You should normalise descriptive features for logistic regression because it:
+- speeds up and stabilizes gradient descent optimization,
+- ensures fair regularization penalties in models like Lasso or Ridge, and
+- prevents features with large numeric ranges from dominating the cost function
+  or causing numerical overflow
+
 ### 7.4.5 Modeling Non-Linear Relationships
 ### 7.4.6 Multinomial Logistic Regression
 ### 7.4.7 Support Vector Machines
@@ -63,3 +123,4 @@ possible.
 ### 3.d. Noise
 ### 3.e. Continuous/Categorical Descriptive features
 ### 3.f. Continuous/Categorical Target features
+
