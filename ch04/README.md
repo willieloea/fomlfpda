@@ -247,7 +247,7 @@ At each node:
 
 1. Sort instances by the value of the descriptive feature.
 2. For each point where the target feature changes, consider a possible split.
-3. Let \\(x\\) be the average of the two adjacent descriptive feature values.
+3. Let \$x\$ be the average of the two adjacent descriptive feature values.
 4. Split the dataset according to whether an instance's descriptive feature value is $\leq x$.
 5. Calculate the entropy with respect to the target feature based on that split.
 6. The split that results in the most information gained is the best value to split on.
@@ -346,6 +346,14 @@ been added. During each iteration, the following is done:
 ## 1. What is the main idea behind how these algorithms work?
 
 ## 2. Describe the standard algorithm for this prediction approach.
+Inductive biases:
+
+| Bias | Consequences | How to address it |
+|---|---|---|
+| **1. Axis-parallel decision boundaries** | Each node tests one feature. Diagonal or curved boundaries therefore require many splits, producing a large, complex tree. | Use **oblique trees**, whose tests combine multiple features, e.g. \(a x_1+b x_2<c\). |
+| **2. Tendency to overfit** | Growing until leaves are pure can fit noise and peculiarities of the training data. Training accuracy is high, but performance on unseen data suffers. | **Prune** the tree, or restrict growth using maximum depth and minimum leaf size. |
+| **3. Preference for features with many possible outcomes** | Information gain favours features that create many small, pure subsets—even an uninformative unique ID. This produces bushy trees with many rules and poor generalisation. | Use **gain ratio**, which normalises information gain by the split information. Remove identifier features. |
+| **4. Preference for the majority class when classes are imbalanced** | Minority classes may form small leaves that are subsequently pruned into majority-class leaves. Overall accuracy can appear high while minority-class recall is poor. | Use **class weights or misclassification costs**, or balance the training data through oversampling/undersampling. Select pruning settings using metrics that reflect minority-class performance. |
 
 ## 3. What are important variations of this algorithm and what do those do?
 
@@ -356,6 +364,54 @@ for a minority class, the leaf may be pruned if there aren't instances of that
 leaf in the validation set.
 
 ### 3.b. Missing Values
+Normal decision trees can't handle missing values, but the C4.5 algorithm can
+handle missing values.
+
+__During Tree Construction__
+
+When C4.5 evaluates a dataset $T$ to find the best split on attribute $A$, it
+ignores any records that have a missing value for $A$ to calculate the baseline
+information gain. However, it applies a penalty based on the proportion of known
+values.
+
+- Step 1: Calculate Gain on Known Values ($Gain_{known}$): It temporarily
+  discards rows with missing values for attribute $A$ and calculates the
+  Information Gain normally using only the complete records.
+- Step 2: Apply a Weight Penalty ($\gamma $): It scales down that gain by a
+  fraction $\gamma $:
+  $$
+  \gamma =\frac{\text{Number\ of\ records\ with\ known\ values\ for\ }A}{\text{Total\ number\ of\ records\ in\ dataset\ }T}
+  $$
+- Step 3: Adjusted Gain: The actual Information Gain used for the attribute is:
+  $$\text{Gain}(T,A)=\gamma \times \text{Gain}_{known}(T,A)$$
+- Step 4: Split Info Penalty: When computing the Split Information (the
+  denominator of the Gain Ratio), C4.5 treats "missing" as its own separate
+  branch category. This inflates the Split Info value, which naturally lowers
+  the final Gain Ratio for attributes riddled with missing data.
+
+
+__Distributing Records After a Split__
+
+Once an attribute $A$ is selected as the splitting node, C4.5 must send the
+training records down to the child nodes.
+- If a record has a known value, it goes to its corresponding branch normally
+  with a weight of $1.0$.
+- If a record has a missing value, it cannot choose a branch. C4.5 sends a
+  fractional copy of that record down every single branch.
+- The Weight: If branch 1 contains 70% of the known data and branch 2 contains
+  30%, the missing record is split. A copy with a weight of $0.7$ goes to branch
+  1, and a copy with a weight of $0.3$ goes to branch 2.
+
+
+__Handling Missing Values During Prediction (Classification)__
+
+If you pass a new test case into a completed tree, and the tree asks to split on
+a feature that is missing in your test case, C4.5 doesn't stall.
+
+It passes the test case down every branch simultaneously. When the case hits the
+leaf nodes of all those branches, C4.5 looks at the class probabilities at each
+leaf, multiplies them by the branch weights, and combines them. The class with
+the highest combined probability is chosen as the final prediction.
 
 ### 3.c. Outliers
 During tree induction, splits are determined by thresholds and class counts, not
@@ -375,4 +431,3 @@ features.
 
 ### 3.f. Continuous/Categorical Target features
 Decision trees can work with both continuous and categorical target features.
-
