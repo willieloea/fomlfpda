@@ -158,6 +158,41 @@ Approaches for handling outliers:
 ## 3.6 Data Preparation
 ### 3.6.1 Normalization
 ### 3.6.2 Binning
+Used to convert a categorical feature into a continuous one.
+Define a series of ranges and if instances fall in that range, increase the
+count for that bin.
+
+Few bins:  
+- loss of information, wipes out information of trends in the data.
+- (advantage) large number of instances in each bin.
+
+Many bins:  
+- can capture the noise of the sample/training data.
+- (advantage) more closely aligns with or reflects trends in data
+
+__Equal width binning__:  
+- bin instances based on the width of continuous feature bin ranges.
+- Advantages:
+  - intuitive: Easy to understand and explain.
+  - preserves scale relationships: Keeps a direct, linear mapping to the
+    original physical scale (e.g., age, income).
+- Disadvantages:
+  - Sensitive to outliers
+  - Risk of sparse/empty bins
+
+
+Equal frequency binning:
+- sort instances, and bin instances according to number of instances divided by
+  the number of bins.
+- Advantages:
+  - Prevents data sparsity
+  - Resilient to outliers
+  - Maximizes categorical entropy
+- Disadvantages:
+  - Distorts distances: Compresses regions with high data density and stretches
+    regions with low data density.
+
+
 ### 3.6.3 Sampling
 The sampling approach should not introduce bias - the sample used to train the
 model should accurately reflect the domain that is being modeled.
