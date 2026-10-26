@@ -125,10 +125,21 @@ def majority(query, k_nn):
 
 ## 3. How does the standard algorithm take the following data quality issues, and can they be addressed?
 ### 3.a. Imbalanced classes
+Use SMOTE or lower $k$
+
 ### 3.b. Missing Values
+Use a measure that ignores missing values, or impute missing values (<30-50%
+missing).
+
 ### 3.c. Outliers
+Use median average
+
 ### 3.d. Noise
+Remove tomek links, increase $k$
+
 ### 3.e. Continuous/Categorical Descriptive features
+one hot encode categorical features
+
 ### 3.f. Continuous/Categorical Target features
-
-
+Majority vote for categorical
+Mean or distance weighting of nearest neighbors

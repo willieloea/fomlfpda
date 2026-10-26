@@ -97,7 +97,7 @@ where:
 - $\eta$ is the learning rate.
 - $h_{kj, k^*j^*}$ determines how strongly neuron $(k, j)$ is updated, based on the grid distance between $(k, j)$ and $(k^*, j^*)$: $\|\underline{r}_{kj} - \underline{r}_{k^*j^*}\|_2$.
 
-The function \(h\) controls **how strongly each neuron learns from an input, based on its grid distance from the winner**.
+The function $h$ controls **how strongly each neuron learns from an input, based on its grid distance from the winner**.
 
 A common choice is a **Gaussian neighbourhood function**:
 
@@ -114,9 +114,9 @@ $$
 
 Here:
 
-- \(\mathbf{r}_{kj}\) is the neuron’s grid position.
-- \(\mathbf{r}_{k^*j^*}\) is the winner’s grid position.
-- \(\sigma(t)>0\) controls the neighbourhood’s width and decreases during training.
+- $\mathbf{r}_{kj}$ is the neuron’s grid position.
+- $\mathbf{r}_{k^*j^*}$ is the winner’s grid position.
+- $\sigma(t)>0$ controls the neighbourhood’s width and decreases during training.
 
 For a rectangular grid, the squared distance is simply
 
@@ -125,14 +125,14 @@ $$
 =(k-k^*)^2+(j-j^*)^2.
 $$
 
-With \(\sigma=1\), the influence decreases like this:
+With $\sigma=1$, the influence decreases like this:
 
-| Grid distance from winner | \(h\) |
+| Grid distance from winner | $h$ |
 |---|---:|
-| \(0\): winner itself | \(1\) |
-| \(1\): adjacent neuron | \(0.607\) |
-| \(2\) | \(0.135\) |
-| \(3\) | \(0.011\) |
+| $0$: winner itself | $1$ |
+| $1$: adjacent neuron | $0.607$ |
+| $2$ | $0.135$ |
+| $3$ | $0.011$ |
 
 In the update
 
@@ -142,9 +142,9 @@ $$
 (\mathbf{x}-\mathbf{w}_{kj}),
 $$
 
-**\(\eta h\) is the effective learning rate for that neuron**. For example, if \(\eta=0.2\) and \(h=0.607\), the prototype moves about \(12.1\%\) of the way toward the input.
+**$\eta h$ is the effective learning rate for that neuron**. For example, if $\eta=0.2$ and $h=0.607$, the prototype moves about $12.1\%$ of the way toward the input.
 
-There is no single mandatory equation for \(h\). A simpler alternative uses a hard radius \(R(t)\):
+There is no single mandatory equation for $h$. A simpler alternative uses a hard radius $R(t)$:
 
 $$
 h_{kj,k^*j^*}(t)=
@@ -155,3 +155,26 @@ h_{kj,k^*j^*}(t)=
 $$
 
 The Gaussian gives a gradual decline in influence; the hard-radius version updates every neuron inside the neighbourhood equally.
+
+### 4.5.2 Reducing training costs
+- **Restrict neighbourhood updates.** Use a bounded neighbourhood, such as a clipped Gaussian, and update only neurons within its radius of the BMU. Neurons outside this region receive no update, reducing the number of weight calculations. Shrinking the radius during training reduces this cost further.
+- **Reduce the cost of finding the BMU.** An exhaustive search compares each input with every neuron. Use an approximate nearest-neighbour method or, once the map has become ordered, search near the input’s previous BMU. Fewer distance calculations are needed, although an approximate search may miss the true BMU.
+- **Use batch training with parallel computation.** Find BMUs for a batch using fixed prototypes, then recompute prototypes from the assigned inputs and neighbourhood weights. Distance calculations and accumulation can run in parallel, and prototypes are updated once per batch. This can reduce training time, although batch training still requires BMU searches.
+
+### 4.5.3 SOM for imputation
+1. Train a SOM on complete examples, or use a training procedure that ignores missing components.
+2. For an incomplete instance, calculate its distance to each prototype using only its observed features.
+3. Select the closest prototype—the BMU.
+4. Replace each missing value with the corresponding component of the BMU’s prototype.
+
+The estimate therefore comes from customers with similar observed characteristics, rather than from the entire dataset.
+
+# Practice questions
+1. How can a SOM be used for customer profiling?
+  - Represent each customer as a feature vector containing information such as age, income, number of dependants, chronic conditions and claims expenditure.
+  - Scale numerical features and appropriately encode categorical features so that distances are meaningful.
+  - Train a SOM on these vectors. Each neuron learns a prototype representing similar customers, while neighbouring neurons tend to represent similar profiles.
+  - Assign each customer to their best-matching unit (BMU) - the neuron whose prototype is closest to their vector.
+  - Examine the prototypes and regions of the map to identify customer segments, such as young customers with low claims or older customers with chronic conditions. These profiles can inform benefit design and targeted services.
+2. How can a SOM be used for classification?
+  - by attaching class labels to the trained map. A standard SOM learns without using class labels. After training, present labelled examples and assign each neuron the majority class of the examples for which it is the BMU. To classify a new instance, find its BMU and return that neuron’s assigned class. Thus, the SOM supplies the representation and matching mechanism; the labelled examples supply the class interpretation.

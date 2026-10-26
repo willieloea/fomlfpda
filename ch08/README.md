@@ -43,4 +43,38 @@ These notes are based on a university course, and draws from
 ### 3.e. Continuous/Categorical Descriptive features
 ### 3.f. Continuous/Categorical Target features
 
+# Practice questions
+1. sigmoid activation function in hidden and output layers of NN, and gradient descent.
+   1. Should you scale target features?
+      - if the target values fall outside the sigmoid's output range, yes.
+   2. Should you scale input features?
+      - Yes.
+      - Large input magnitudes can produce large weighted sums, pushing sigmoid neurons into **saturation**, where their derivatives are close to zero. This leads to small gradients and slow learning.
+      - Features with very different scales can produce poorly conditioned optimization: gradient descent may oscillate in some directions while progressing slowly in others. Scaling makes updates more balanced and generally improves convergence.
+  3. Why shouldn't you initialize weights and biases with large values?
+      - can cause sigmoid saturation from the start. For
+        $$
+        \sigma(z)=\frac{1}{1+e^{-z}},
+        \qquad
+        \sigma'(z)=\sigma(z)\bigl(1-\sigma(z)\bigr),
+        $$
+        large positive or negative $z$ gives $\sigma'(z)\approx 0$. Gradients propagated through these neurons become very small, so gradient descent changes their parameters very slowly and training may effectively stall.
 
+
+2. Why is momentum needed for stochastic gradient descent?
+  - In stochastic learning, weights are updated using individual randomly selected training examples. These updates provide noisy estimates of the full gradient, so successive updates may point in conflicting directions, causing oscillation. Momentum incorporates the previous update into the current one:
+    $$
+    \Delta w_t=-\eta\nabla E_t(w_t)+\alpha\Delta w_{t-1}.
+    $$
+    It smooths fluctuations, reduces oscillation, and builds speed in directions where gradients consistently agree, often accelerating convergence.
+
+3. Can a single artificial neuron only seperate linearly separable classes?
+  - True for a standard artificial neuron that computes a weighted sum followed by a threshold or sigmoid activation. Its decision is determined by
+    $$
+    w^\top x+b \geq c,
+    $$
+    so its decision boundary is the hyperplane
+    $$
+    w^\top x+b=c.
+    $$
+    It can therefore perfectly separate two classes only if they are **linearly separable** in its input space. It cannot perfectly classify XOR using the original inputs; that requires additional neurons or a nonlinear feature transformation.
